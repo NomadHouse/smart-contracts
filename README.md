@@ -7,4 +7,3 @@ Holds all of the smart contract functionality and web3 related tooling
   - ETH Development Framework - Truffle or Hardhat 
   - Smart contract monitoring - OpenZeppelin
   - Data Storage - IPFS & Filecoin
-  - 

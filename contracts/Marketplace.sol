@@ -96,6 +96,21 @@ contract Marketplace is Ownable, ReentrancyGuard {
         emit ListingChange(listingId, listing.state);
     }
 
+    function cancel(uint256 listingId) public {
+        Listing storage listing = listings[listingId];
+
+        require(listing.seller == msg.sender, "must be seller");
+        require(
+            listing.state == ListingState.Active ||
+                listing.state == ListingState.Paused,
+            "listing not Active or Paused"
+        );
+
+        listing.state = ListingState.Cancelled;
+
+        emit ListingChange(listingId, listing.state);
+    }
+
     // NOTE: Can fail if the seller is no longer the owner
     //       or if the Marketplace is no longer approved.
     function buy(uint256 listingId) public payable nonReentrant {

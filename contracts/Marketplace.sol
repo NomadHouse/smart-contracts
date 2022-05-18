@@ -4,11 +4,9 @@ pragma solidity ^0.8.3;
 
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract NFTMarketPlace is Ownable, ReentrancyGuard {
+contract Marketplace is Ownable, ReentrancyGuard {
     IERC1155 nft;
     uint256 feePercent;
     uint256 collectableFees;

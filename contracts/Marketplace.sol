@@ -51,11 +51,21 @@ contract NFTMarketPlace is Ownable, ReentrancyGuard {
 
     function post(
         uint256 tokenId,
-        uint256 price,
-        bool ready
+        uint256 price, // ETH (denominated in WEI)
+        bool ready // true -> immediately available for sale; false -> must be unPause'd
     ) public {
-        // TODO: verify that token is owned or approved by msg.sender
-        // TODO: verify that msg.sender has approved this contract
+        // NOTE: This does *NOT* guarantee the NFT is approved later.
+        //       We only check here to prevent accidents, not malice.
+        require(
+            nft.isApprovedForAll(msg.sender, address(this)),
+            "approve NFT contract"
+        );
+        // NOTE: This does *NOT* guarantee the NFT is owned by this account later.
+        //       We only check here to prevent accidents, not malice.
+        require(
+            nft.balanceOf(msg.sender, tokenId) == 1,
+            "only NFT owner may post"
+        );
 
         ListingState state = ListingState.Paused;
         if (ready) {
@@ -88,8 +98,9 @@ contract NFTMarketPlace is Ownable, ReentrancyGuard {
         emit ListingChange(listingId, listing.state);
     }
 
+    // NOTE: Can fail if the seller is no longer the owner
+    //       or if the Marketplace is no longer approved.
     function buy(uint256 listingId) public payable nonReentrant {
-        // TODO: does altering `listing` here alters `listings[listingId]`?
         Listing storage listing = listings[listingId];
 
         require(listing.state == ListingState.Active, "listing not active");
@@ -111,25 +122,23 @@ contract NFTMarketPlace is Ownable, ReentrancyGuard {
         emit ListingChange(listingId, listing.state);
     }
 
-    function collect(
-        uint256 listingId,
-        uint256 amount,
-        uint256 gasLimit
-    ) public {
+    function collect(uint256 listingId, uint256 gasLimit) public {
         Listing storage listing = listings[listingId];
 
-        require(msg.sender == listing.seller, "must be seller");
+        require(listing.seller == msg.sender, "must be seller");
         require(listing.state == ListingState.Sold, "listing not Sold");
 
-        (bool sent, ) = listing.seller.call{value: amount, gas: gasLimit}("");
+        uint256 owed = (listing.price * 100) / (100 - feePercent);
+
+        (bool sent, ) = listing.seller.call{value: owed, gas: gasLimit}("");
         require(sent, "failed to collect listing sales");
     }
 
-    function collectFees(uint256 amount, uint256 gasLimit) public onlyOwner {
-        require(amount <= collectableFees, "insufficient fees");
-        collectableFees -= amount;
+    function collectFees(uint256 gasLimit) public onlyOwner {
+        uint256 owed = collectableFees;
+        collectableFees = 0;
 
-        (bool sent, ) = owner().call{value: amount, gas: gasLimit}("");
+        (bool sent, ) = owner().call{value: owed, gas: gasLimit}("");
         require(sent, "failed to send fees");
     }
 }

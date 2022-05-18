@@ -5,13 +5,13 @@
   "main": "index.js",
   "scripts": {
     "build": "hardhat compile",
-    "lint": "solhint ./contracts/*.sol",
-    "verify": "hardhat verify",
     "test": "hardhat test",
+    "lint": "solhint ./contracts/*.sol",
     "format": "prettier -c './contracts/*.sol'",
     "format:write": "prettier --write -c './contracts/*.sol'",
-    "ethereumNode": "hardhat node --no-deploy",
-    "deploy": "hardhat deploy"
+    "verify": "hardhat verify",
+    "deploy": "hardhat deploy",
+    "ethereumNode": "hardhat node --no-deploy"
   },
   "private": true,
   "dependencies": {

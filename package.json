@@ -6,7 +6,11 @@
   "directories": {
     "test": "test"
   },
-  "dependencies": {},
+  "dependencies": {
+    "truffle-contract-size": "^2.0.1",
+    "truffle-hdwallet-provider": "^1.0.17",
+    "truffle-plugin-verify": "^0.5.25"
+  },
   "devDependencies": {
     "@chainlink/contracts": "^0.4.0",
     "@openzeppelin/contracts": "^4.6.0"

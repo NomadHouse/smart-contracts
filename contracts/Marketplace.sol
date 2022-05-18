@@ -132,6 +132,24 @@ contract Marketplace is Ownable, ReentrancyGuard {
         require(sent, "failed to collect listing sales");
     }
 
+    function getListings(uint256 start, uint256 length)
+        public
+        view
+        returns (Listing[] memory list)
+    {
+        if (start >= listings.length) {
+            return new Listing[](0);
+        }
+        if (start + length > listings.length) {
+            length = listings.length - start - 1;
+        }
+
+        list = new Listing[](length);
+        for (uint256 i; i < length; i++) {
+            list[i] = listings[start + i];
+        }
+    }
+
     function collectFees(uint256 gasLimit) public onlyOwner {
         uint256 owed = collectableFees;
         collectableFees = 0;

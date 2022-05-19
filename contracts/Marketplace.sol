@@ -7,16 +7,16 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Marketplace is Ownable, ReentrancyGuard {
-    IERC1155 nft;
-    uint256 feePercent;
-    uint256 collectableFees;
+    IERC1155 public nft;
+    uint256 public feePercent;
+    uint256 public collectableFees;
 
     // The Listing identifier is its array index.
     Listing[] internal listings;
 
     struct Listing {
         uint256 tokenId;
-        address seller;
+        address payable seller;
         uint256 price; // ETH (denominated in WEI)
         ListingState state;
     }
@@ -44,7 +44,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         nft = nft_;
         feePercent = feePercent_;
         // The 0th index is reserved to indicate the absence of a Listing identifier.
-        listings.push(Listing(0, address(0), 0, ListingState.None));
+        listings.push(Listing(0, payable(0), 0, ListingState.None));
     }
 
     function post(
@@ -69,7 +69,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         if (ready) {
             state = ListingState.Active;
         }
-        listings.push(Listing(tokenId, msg.sender, price, state));
+        listings.push(Listing(tokenId, payable(msg.sender), price, state));
 
         emit NewListing(listings.length, tokenId, msg.sender, price, state);
     }
@@ -129,7 +129,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
             ""
         );
 
-        uint256 fee = (msg.value * 100) / feePercent;
+        uint256 fee = msg.value * feePercent / 100;
         collectableFees += fee;
 
         emit ListingChange(listingId, listing.state);
@@ -141,9 +141,12 @@ contract Marketplace is Ownable, ReentrancyGuard {
         require(listing.seller == msg.sender, "must be seller");
         require(listing.state == ListingState.Sold, "listing not Sold");
 
-        uint256 owed = (listing.price * 100) / (100 - feePercent);
+        listing.state = ListingState.Closed;
+
+        uint256 owed = listing.price * (100 - feePercent) / 100;
 
         (bool sent, ) = listing.seller.call{value: owed, gas: gasLimit}("");
+
         require(sent, "failed to collect listing sales");
     }
 

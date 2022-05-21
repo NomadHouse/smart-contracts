@@ -1,15 +1,15 @@
-import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-solhint";
+import "@nomiclabs/hardhat-etherscan";
+import "@tenderly/hardhat-tenderly";
 import "hardhat-deploy";
 import "hardhat-contract-sizer";
 import "hardhat-abi-exporter";
 import "hardhat-docgen";
-import "@tenderly/hardhat-tenderly";
 import "hardhat-gas-reporter";
-import "@openzeppelin/hardhat-upgrades";
+import "hardhat-deploy-ethers";
 import { HardhatUserConfig } from "hardhat/types";
 
-import { BigNumber } from "ethers";
+import { compilers } from "./hardhat.common";
 
 const gwei = 1000000000;
 
@@ -24,17 +24,7 @@ export const config: HardhatUserConfig = {
     enabled: !!process.env.REPORT_GAS,
   },
   solidity: {
-    compilers: [
-      {
-        version: "0.8.3",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
-    ],
+    compilers,
   },
   namedAccounts: {
     deployer: {
@@ -75,9 +65,9 @@ export const config: HardhatUserConfig = {
       chainId: 1,
     },
   },
-  // etherscan: {
-  // apiKey: ETHERSCAN_API_KEY,
-  // },
+  etherscan: {
+    apiKey: ETHERSCAN_API_KEY,
+  },
 };
 
 const PRIVATE_KEY = process.env["PRIVATE_KEY"];

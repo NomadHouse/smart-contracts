@@ -4,3 +4,5 @@ dist/
 typechain-types/
 .mnemonic
 .env
+soljson-*
+.vscode

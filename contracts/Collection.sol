@@ -1,9 +1,10 @@
 // contracts/Collection.sol
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.3;
 
-import "@chainlink/contracts/src/v0.7/ChainlinkClient.sol";
+import "./chainlink/ChainlinkClient.sol";
 import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
+// import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
@@ -180,13 +181,17 @@ contract Collection is
       * @param _titleId The primary identifier for performing title searches
     */
     function verifyTitleOwnership(bytes32 _titleId) public returns(bytes32 requestId) {
-      require(titleSearchUri.length != 0, 'Cannot execute ChainLink request: Title Search URI is empty');
+      require(bytes(titleSearchUri).length != 0, 'Cannot execute ChainLink request: Title Search URI is empty');
       require(_titleId.length != 0, 'Cannot execute ChainLink request: Request Parameter Title ID is empty');
 
-      Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfillMultipleParameters.selector);
+      Chainlink.Request memory request = buildChainlinkRequest(
+        jobId, 
+        address(this), 
+        this.fulfillMultipleParameters.selector
+      );
         
       // Set the URL to perform the GET request on
-      request.add("get", string(abi.encodePacked(titleSearchURI, _titleId, ".json")));
+      request.add("get", string(abi.encodePacked(titleSearchUri, _titleId, ".json")));
             
       // Sends the request
       return sendChainlinkRequestTo(oracle, request, fee);
@@ -195,7 +200,11 @@ contract Collection is
     /**
      * @dev Receive the response and store it in a mapping to track verified titles
      */ 
-    function fulfillTitleOwnershipVerification(bytes32 _requestId, bytes32 _titleId, bool _verified) public recordChainlinkFullfillment(_requestId) {
+    function fulfillTitleOwnershipVerification(
+      bytes32 _requestId, 
+      bytes32 _titleId, 
+      bool _verified
+      ) public recordChainlinkRequest(_requestId) {
         _verifiedTitles[_titleId] = _verified;
     }
 
@@ -217,64 +226,12 @@ contract Collection is
       deeds[currentDeedId] = FractionalDeed(
         currentDeedId,
         _address,
-        _currentTitleVerified
+        _verifiedTitles[titleId]
       );
       _owners[currentDeedId] = _address;
       _deedIds.increment();
 
       emit DeedsMinted(_address, currentDeedId);
-    }
-
-
-    /**
-      * @dev Deed batch minting functionality
-      * @param _address the _address to mint the Deeds to
-      * @param amount the amount of deeds to mint
-      * @param titleId the 
-      * @param data the 
-      * @return uri string of the deedId metadata
-     */
-    function batchMintDeeds(
-      address _address,
-      uint memory amount,
-      bytes32 titleId,
-      bytes memory data
-    ) external whenNotPaused onlyVerifiedAddress(_address) onlyMarketplaceContract {
-      uint[] memory tempDeedIds;
-      uint256 currentDeedId = _deedIds.current();
-      tempDeedIds.push(currentDeedId);
-
-      // Creates an array of deed ids in incremental order
-      // This is used later to mint each id through a loop
-      for (uint i = 1; i < amount; i++) {
-        tempDeedIds.push(currentDeedId + i);
-      }
-
-      if(_verifiedTitles[titleId].length == 0) {
-        verifyTitleOwnership(titleId);
-      }
-      require(_verifiedTitles[titleId] == true, 'Title ownership has not been verified');
-      
-      // Minting deeds through a loop
-      for (uint i = 0; i < amount; i++) {
-        require(_deedIds[tempDeedIds[i]] == 0, 'Deed has already been minted');
-
-        _safeMint(_address, tempDeedIds[i]);
-
-        // Returning array to default values (saves gas)
-        delete tempDeedIds;
-
-        deeds[deedId] = FractionalDeed(
-          currentDeedId,
-          _address,
-          _currentTitleVerified
-        );
-        _owners[deedId] = _address;
-
-        _deedIds.increment();
-      }
-
-      emit DeedsMinted(_address, tempDeedIds);
     }
 
 
@@ -320,7 +277,7 @@ contract Collection is
     address to, 
     uint256 deedId,
     bytes memory data
-  ) public virtual override onlyVerifiedAddress(_to) onlyMarketplaceContract {
+  ) public virtual override onlyVerifiedAddress(to) onlyMarketplaceContract {
     super.safeTransferFrom(from, to, deedId, data);
     _owners[deedId] = to;
   }
@@ -337,7 +294,7 @@ contract Collection is
     address to, 
     uint256[] memory deedIds, 
     bytes memory data
-  ) public virtual onlyVerifiedAddress(_to) onlyMarketplaceContract {
+  ) public virtual onlyVerifiedAddress(to) onlyMarketplaceContract {
     for (uint i=0; i < deedIds.length; i++) {
       super.safeTransferFrom(from, to, deedIds[i], data);
       _owners[deedIds[i]] = to;

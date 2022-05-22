@@ -2,18 +2,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.3;
 
-import "./chainlink/ChainlinkClient.sol";
 import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
-// import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
+import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract Collection is ERC721, Ownable, Pausable {
+contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
     using Counters for Counters.Counter;
     using Chainlink for Chainlink.Request;
 
@@ -93,6 +91,7 @@ contract Collection is ERC721, Ownable, Pausable {
         titleSearchUri = "https://bafybeihuftdtf5rjkep52k5afrydtlo4mvznafhtmrsqaunaninykew3qe.ipfs.dweb.link/";
         jobId = "67bc04e4db32473bb5a893674f7e6342";
         fee = 0; // (Varies by network and job)
+        _deedIds.increment(); // leave id=0 for checking if deed exists
     }
 
     //=============================== OWNER-ONLY FUNCTIONS ===================================//
@@ -213,7 +212,7 @@ contract Collection is ERC721, Ownable, Pausable {
         Chainlink.Request memory request = buildChainlinkRequest(
             jobId,
             address(this),
-            this.fulfillMultipleParameters.selector
+            this.fulfillTitleOwnershipVerification.selector
         );
 
         // Set the URL to perform the GET request on
@@ -233,41 +232,35 @@ contract Collection is ERC721, Ownable, Pausable {
         bytes32 _requestId,
         bytes32 _titleId,
         bool _verified
-    ) public recordChainlinkRequest(_requestId) {
+    ) public recordChainlinkFulfillment(_requestId) {
         _verifiedTitles[_titleId] = _verified;
     }
 
-    function mintDeed(
-        address _address,
-        bytes32 titleId,
-        bytes memory data
-    )
+    function mintDeed(address payable newOwner, bytes32 titleId)
         external
         whenNotPaused
-        onlyVerifiedAddress(_address)
+        onlyVerifiedAddress(newOwner)
         onlyMarketplaceContract
     {
         uint256 currentDeedId = _deedIds.current();
-        require(deeds[currentDeedId] == 0, "Deed has already been minted");
+        require(deeds[currentDeedId].id == 0, "Deed has already been minted");
 
-        if (_verifiedTitles[titleId].length == 0) {
-            verifyTitleOwnership(titleId);
-        }
+        // TODO what is this trying to do?
+        // if (_verifiedTitles[titleId].length == 0) {
+        // verifyTitleOwnership(titleId);
+        // }
+
         require(
             _verifiedTitles[titleId] == true,
             "Title ownership has not been verified"
         );
 
-        _safeMint(_address, currentDeedId);
-        deeds[currentDeedId] = FractionalDeed(
-            currentDeedId,
-            _address,
-            _verifiedTitles[titleId]
-        );
-        _owners[currentDeedId] = _address;
+        _safeMint(newOwner, currentDeedId);
+        deeds[currentDeedId] = FractionalDeed(currentDeedId, titleId, newOwner);
+        _owners[currentDeedId] = newOwner;
         _deedIds.increment();
 
-        emit DeedsMinted(_address, currentDeedId);
+        emit DeedMinted(newOwner, currentDeedId);
     }
 
     //================== NON-MODIFYING FUNCTIONS ==================//
@@ -352,7 +345,7 @@ contract Collection is ERC721, Ownable, Pausable {
     /**
      * @dev returns the metadata base uri string for all tokens
      */
-    function _baseURI() internal view returns (string memory) {
+    function _baseURI() internal view override returns (string memory) {
         return baseTokenUri;
     }
 }

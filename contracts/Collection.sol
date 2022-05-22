@@ -48,6 +48,9 @@ contract Collection is
 
     // Title search api base URI string 
     string internal titleSearchUri;
+
+    // Marketplace smart contract address
+    address internal marketplaceContract;
         
     // Key value pair containing a list of deeds in the contract
     mapping(uint256 => FractionalDeed) internal deeds;
@@ -74,16 +77,28 @@ contract Collection is
      */
     event DeedsMinted(
        address indexed receiver,
+       uint256 amount,
        uint256[] deedIds
     );
 
     //=============================== INITIALIZATION ===================================//
 
-    constructor() ERC721("NomadHouse", "NMH") {
-      setPublicChainlinkToken();
+    /**
+     * @notice Initialize the link token and target oracle
+     *
+     * Kovan Testnet details:
+     * Link Token: 0xa36085F69e2889c224210F603D836748e7dC0088
+     * Oracle: 0x094C858cF9428a4c18023AA714d3e205b6Db6354 (Oracle Kovan Address)
+     * jobId: 67bc04e4db32473bb5a893674f7e6342
+     *
+    */
+
+    constructor() ERC721("NomadHouse", "NMH") ConfirmedOwner(msg.sender){
+      oracle = 0x094C858cF9428a4c18023AA714d3e205b6Db6354; 
+      setChainlinkToken(0xa36085F69e2889c224210F603D836748e7dC0088);
+      setChainlinkOracle(oracle);
       titleSearchUri = "https://bafybeihuftdtf5rjkep52k5afrydtlo4mvznafhtmrsqaunaninykew3qe.ipfs.dweb.link/";
-      oracle = 0xc57B33452b4F7BB189bB5AfaE9cc4aBa1f7a4FD8; // Change this to our oracle contract address
-      jobId = "d5270d1c311941d0b08bead21fea7747"; // Change this to the actual job id we use once it's built out
+      jobId = "67bc04e4db32473bb5a893674f7e6342";
       fee = 0; // (Varies by network and job)
     }
 
@@ -112,6 +127,14 @@ contract Collection is
     }
 
     /**
+      * @dev sets marketplace smart contract address to restrict functions to 
+      * this contract only
+    */
+    function setMarketplaceContract(address newMarketplaceContract) external whenNotPaused onlyOwner {
+      marketplaceContract = newMarketplaceContract;
+    }
+
+    /**
       * @dev add recipient addresses to the authorized wallets list and grant them the ability to mint
     */
     function authorizeWallet(address _wallet) external whenNotPaused onlyOwner {
@@ -127,10 +150,23 @@ contract Collection is
       _verifiedAddresses[_wallet] = false;
     }
 
+    /**
+      * @dev withdraw link from contract
+    */
+    function withdrawLink() public onlyOwner {
+      LinkTokenInterface link = LinkTokenInterface(chainlinkTokenAddress());
+      require(link.transfer(msg.sender, link.balanceOf(address(this))), "Unable to transfer");
+    }
+
     //============================= MODIFIERS ===============================//
 
     modifier onlyVerifiedAddress(address _address) {
-      require(_verifiedAddresses[_address] == true);
+      require(_verifiedAddresses[_address] == true, "Address must be verified through KYC");
+      _;
+    }
+
+    modifier onlyMarketplaceContract {
+      require(msg.sender == marketplaceContract, "Function is restricted to the marketplace contract");
       _;
     }
 
@@ -145,46 +181,36 @@ contract Collection is
     */
     function verifyTitleOwnership(bytes32 _titleId) public returns(bytes32 requestId) {
       require(titleSearchUri.length != 0, 'Cannot execute ChainLink request: Title Search URI is empty');
-      Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
+      require(_titleId.length != 0, 'Cannot execute ChainLink request: Request Parameter Title ID is empty');
+
+      Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfillMultipleParameters.selector);
         
       // Set the URL to perform the GET request on
-      request.add("get", titleSearchURI);
-      
-      // Set the path to find the desired data in the API response, where the response format is:
-      // {"TITLEID":
-      //   {
-      //    "VERIFIED": true,
-      //   }
-      //  }
-      
-      request.add("titleId", _titleId); // Chainlink nodes 1.0.0 and later support this format
-      
+      request.add("get", string(abi.encodePacked(titleSearchURI, _titleId, ".json")));
+            
       // Sends the request
       return sendChainlinkRequestTo(oracle, request, fee);
     }
 
     /**
-     * Receive the response in the form of a boolean
+     * @dev Receive the response and store it in a mapping to track verified titles
      */ 
-    function fulfillTitleOwnership(bytes32 _requestId, bytes32 titleId, bool _verified) public recordChainlinkFullfillment(_requestId) {
-        _verifiedTitles[titleId] = _verified;
-    }
-
-    function withdrawLink() public onlyOwner {
-      LinkTokenInterface link = LinkTokenInterface(chainlinkTokenAddress());
-      require(link.transfer(msg.sender, link.balanceOf(address(this))), "Unable to transfer");
+    function fulfillTitleOwnershipVerification(bytes32 _requestId, bytes32 _titleId, bool _verified) public recordChainlinkFullfillment(_requestId) {
+        _verifiedTitles[_titleId] = _verified;
     }
 
 
-    function mintFractionalDeed(
+    function mintDeed(
       address _address,
       bytes32 titleId,
       bytes memory data
-    ) external whenNotPaused onlyVerifiedAddress(_address) {
+    ) external whenNotPaused onlyVerifiedAddress(_address) onlyMarketplaceContract {
       uint256 currentDeedId = _deedIds.current();
       require(deeds[currentDeedId] == 0, 'Deed has already been minted');
 
-      verifyTitleOwnership(titleId);
+      if(_verifiedTitles[titleId].length == 0) {
+        verifyTitleOwnership(titleId);
+      }
       require(_verifiedTitles[titleId] == true, 'Title ownership has not been verified');
 
       _safeMint(_address, currentDeedId);
@@ -208,12 +234,12 @@ contract Collection is
       * @param data the 
       * @return uri string of the deedId metadata
      */
-    function batchMintFractionalDeeds(
+    function batchMintDeeds(
       address _address,
       uint memory amount,
       bytes32 titleId,
       bytes memory data
-    ) external whenNotPaused onlyVerifiedAddress(_address) {
+    ) external whenNotPaused onlyVerifiedAddress(_address) onlyMarketplaceContract {
       uint[] memory tempDeedIds;
       uint256 currentDeedId = _deedIds.current();
       tempDeedIds.push(currentDeedId);
@@ -224,7 +250,9 @@ contract Collection is
         tempDeedIds.push(currentDeedId + i);
       }
 
-      verifyTitleOwnership(titleId);
+      if(_verifiedTitles[titleId].length == 0) {
+        verifyTitleOwnership(titleId);
+      }
       require(_verifiedTitles[titleId] == true, 'Title ownership has not been verified');
       
       // Minting deeds through a loop
@@ -292,7 +320,7 @@ contract Collection is
     address to, 
     uint256 deedId,
     bytes memory data
-  ) public virtual override onlyVerifiedAddress(_to) {
+  ) public virtual override onlyVerifiedAddress(_to) onlyMarketplaceContract {
     super.safeTransferFrom(from, to, deedId, data);
     _owners[deedId] = to;
   }
@@ -309,7 +337,7 @@ contract Collection is
     address to, 
     uint256[] memory deedIds, 
     bytes memory data
-  ) public virtual onlyVerifiedAddress(_to) {
+  ) public virtual onlyVerifiedAddress(_to) onlyMarketplaceContract {
     for (uint i=0; i < deedIds.length; i++) {
       super.safeTransferFrom(from, to, deedIds[i], data);
       _owners[deedIds[i]] = to;

@@ -7,6 +7,8 @@
     "test": "test"
   },
   "dependencies": {
+    "@defi-wonderland/smock": "^2.0.7",
+    "@truffle/hdwallet-provider": "^2.0.8",
     "truffle-contract-size": "^2.0.1",
     "truffle-hdwallet-provider": "^1.0.17",
     "truffle-plugin-verify": "^0.5.25"

@@ -28,26 +28,24 @@ describe("Collection contract", function () {
   // https://market.link/
   const jobId = web3.utils.toHex('4c7b7ffb66b344fbaa64995af81e355a')
   const url =
-    'https://bafybeihuftdtf5rjkep52k5afrydtlo4mvznafhtmrsqaunaninykew3qe.ipfs.dweb.link/'
-  const titleId = 'test-title.json'
+    'https://bafybeihuftdtf5rjkep52k5afrydtlo4mvznafhtmrsqaunaninykew3qe.ipfs.dweb.link/30498133.json'
 
   // Represents 1 LINK for testnet requests
   const payment = web3.utils.toWei('1')
 
-  let link, oc, cc
+  let link, oc, cc // Link contract, Oracle contract and Consumer contract
 
-  
-  // build up and tear down a new Collection contract before each test
+  // Build up and tear down a new Collection contract before each test
   beforeEach(async () => {
     link = await LinkToken.new({ from: defaultAccount })
     oc = await Oracle.new(link.address, { from: defaultAccount })
-    cc = await Collection.new(link.address, { from: defaultAccount })
+    cc = await Collection.new({ from: defaultAccount })
     await oc.setFulfillmentPermission(oracleNode, true, {
       from: defaultAccount,
     })
   });
 
-  describe('#createRequest', () => {
+  describe('#verifyTitleOwnership', () => {
     context('without LINK', () => {
       it('reverts', async () => {
         await expectRevert.unspecified(
@@ -86,8 +84,7 @@ describe("Collection contract", function () {
     })
   })
 
-  describe('#fulfill - verifyTitleOwnership', () => {
-    const expected = 50000
+  describe('#fulfillTitleOwnershipVerification', () => {
     const response = web3.utils.padLeft(web3.utils.toHex(expected), 64)
     let request
 
@@ -115,14 +112,6 @@ describe("Collection contract", function () {
         web3.utils.padLeft(expected, 64),
       )
     });
-  });
-
-  it('Can mint', async function () { 
-    
-  });
-
-  it('Can batch mint', async function () { 
-    
   });
 
 });

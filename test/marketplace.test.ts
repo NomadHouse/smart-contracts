@@ -94,7 +94,7 @@ describe("Marketplace", function () {
           const afterFee = price.sub(fee);
           const listingId = 1;
 
-          beforeEach(async () => {
+          beforeEach("postListing", async () => {
             await postListing({ seller: Signer.seller, tokenId, price });
           });
 

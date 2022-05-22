@@ -8,7 +8,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   await deployments.deploy("NFT", {
     contract: "Collection",
     from: deployer,
-    args: [""],
+    args: [],
     log: true,
   });
 };

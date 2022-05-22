@@ -97,7 +97,7 @@ export async function makeNFTContract(
   signer?: MaybeAddressable
 ): Promise<TestNFT> {
   const address = signer ? await maybeAddressableToString(signer) : undefined;
-  return (await ethers.getContract("NFT", address)) as TestNFT;
+  return (await ethers.getContract("TestNFT", address)) as TestNFT;
 }
 
 export async function assertListing(opts: {

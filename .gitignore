@@ -1,3 +1,6 @@
 node_modules
 .mnemonic
 .env
+cache/
+dist/
+typechain-types/

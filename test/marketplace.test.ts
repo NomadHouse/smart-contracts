@@ -78,7 +78,7 @@ describe("Marketplace", function () {
 
       beforeEach("mint fake NFT", async () => {
         const nft = await makeTestNFTContract(Signer.seller);
-        await nft.faucet(tokenId, 1);
+        await nft.faucet(tokenId);
       });
 
       describe("approve marketplace", () => {

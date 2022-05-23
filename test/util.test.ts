@@ -4,6 +4,7 @@ import { expect } from "chai";
 
 import { Collection, Marketplace, TestNFT } from "../typechain-types";
 import { SignerWithAddress } from "hardhat-deploy-ethers/signers";
+import { arrayify } from "ethers/lib/utils";
 
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 export const BASIS = BigNumber.from(10).pow(18); // 1e18 wei == 1 eth
@@ -156,6 +157,7 @@ export enum Signer {
   deployer = 0,
   seller,
   buyer,
+  oracle,
 }
 
 export function getSigner(id: Signer | string): Promise<SignerWithAddress> {
@@ -190,4 +192,11 @@ export function isAddressable(x: any): x is Addressable {
     x !== null &&
     typeof (x as Addressable).address === "string"
   );
+}
+
+export function paddedBytes32(x: string): Uint8Array {
+  while (x.length < 2 + 64) {
+    x += "0";
+  }
+  return arrayify(x);
 }

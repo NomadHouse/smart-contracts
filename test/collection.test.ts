@@ -2,32 +2,19 @@ import { deployments } from "hardhat";
 import { solidity } from "ethereum-waffle";
 
 import {
-  BASIS,
-  ListingState,
   makeMarketplaceContract,
-  makeTestNFTContract,
-  NULL_ADDRESS,
-  pauseListing,
-  postListing,
   getSigner,
   Signer,
-  assertListing,
   maybeAddressableToString,
-  unPauseListing,
-  cancelListing,
-  buyListing,
-  collectEarnings,
-  collectFees,
   makeETHBalanceGetter,
   MaybeAddressable,
   makeCollectionContract,
+  paddedBytes32,
 } from "./util.test";
-import { FEE_PERCENT } from "../deploy/002_marketplace/000_deploy_marketplace";
 
 import { expect, config as ChaiConfig, use as ChaiUse } from "chai";
 import ChaiAsPromised from "chai-as-promised";
 import { BigNumber } from "ethers";
-import { arrayify, hexlify } from "ethers/lib/utils";
 
 ChaiUse(ChaiAsPromised);
 ChaiUse(solidity);
@@ -67,7 +54,9 @@ describe("Collection", function () {
       await expect(
         collection.ownerOf(FAKE_DEED_ID),
         "ownerOf"
-      ).to.eventually.be.rejectedWith(RegExp("Deed does not exist"));
+      ).to.eventually.be.rejectedWith(
+        RegExp("ERC721: owner query for nonexistent token")
+      );
 
       await expect(
         collection.uri(FAKE_DEED_ID),
@@ -76,6 +65,24 @@ describe("Collection", function () {
 
       const exists = await collection.exists(FAKE_DEED_ID);
       expect(exists, "exists").to.be.false;
+    });
+  });
+
+  describe("chainlink encode/decode", () => {
+    it("encode-decode", async () => {
+      const collection = await makeCollectionContract();
+
+      const owner = await maybeAddressableToString(Signer.seller);
+
+      const fractionalization = 52;
+      const encoded = await collection.encodeTitleVerificationResponse(
+        owner,
+        fractionalization
+      );
+      const decoded = await collection.decodeTitleVerificationResponse(encoded);
+
+      expect(decoded[0]).to.equal(owner);
+      expect(decoded[1]).to.equal(fractionalization);
     });
   });
 
@@ -98,6 +105,7 @@ describe("Collection", function () {
       const marketplace = await makeMarketplaceContract();
       await collection.setMarketplaceContract(marketplace.address);
     });
+
     beforeEach("unpause", async () => {
       const collection = await makeCollectionContract(Signer.deployer);
       await collection.unpause();
@@ -118,12 +126,92 @@ describe("Collection", function () {
       });
 
       describe("verify title ownership", () => {
-        const titleId = arrayify(1234);
+        const titleId = paddedBytes32("0x248248248248");
+        let requestId: string;
+
         beforeEach("verifyTitleOwnership", async () => {
           const collection = await makeCollectionContract(Signer.deployer);
+
+          requestId = await collection.callStatic.verifyTitleOwnership(titleId);
+
           await collection.verifyTitleOwnership(titleId);
+        });
+
+        beforeEach("fulfillTitleOwnershipVerification", async () => {
+          const oracle = "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
+          const collection = await makeCollectionContract(oracle);
+          const response = await collection.encodeTitleVerificationResponse(
+            await maybeAddressableToString(Signer.seller),
+            52 // weeks in year
+          );
+          await collection.fulfillTitleOwnershipVerification(
+            requestId,
+            response
+          );
+        });
+
+        it("title", async () => {
+          const collection = await makeCollectionContract();
+          const owner = await maybeAddressableToString(Signer.seller);
+
+          const title = await collection.getTitle(titleId);
+          expect(title).to.deep.equal([owner, 52, []]);
+        });
+
+        describe("mint one NFT", () => {
+          const tokenId = 1;
+
+          beforeEach("mint 1", async () => {
+            const collection = await makeCollectionContract(Signer.seller);
+            await collection.mintDeeds(titleId, 1);
+          });
+
+          it("title", async () => {
+            const collection = await makeCollectionContract();
+            const owner = await maybeAddressableToString(Signer.seller);
+
+            const title = await collection.getTitle(titleId);
+            expect(title.owner, "owner").to.equal(owner);
+            expect(title.deedsLeftToMint_).to.equal(51);
+            expect(title.deeds.map(BigNumber.from)).to.deep.equal(
+              [tokenId].map(BigNumber.from)
+            );
+          });
+
+          it("uri", async () => {
+            const collection = await makeCollectionContract();
+            const uri = await collection.uri(tokenId);
+            expect(uri).to.equal("https://fake.faux/1.json");
+          });
+
+          describe("mint 51 NFTs", () => {
+            beforeEach("mint 51", async () => {
+              const collection = await makeCollectionContract(Signer.seller);
+              await collection.mintDeeds(titleId, 51);
+            });
+
+            it("title", async () => {
+              const collection = await makeCollectionContract();
+              const owner = await maybeAddressableToString(Signer.seller);
+
+              const title = await collection.getTitle(titleId);
+              expect(title.owner, "owner").to.equal(owner);
+              expect(title.deedsLeftToMint_).to.equal(0);
+              expect(title.deeds.map(BigNumber.from)).to.deep.equal(
+                range(1, 53).map(BigNumber.from) // [1,53) aka [1,52]
+              );
+            });
+          });
         });
       });
     });
   });
 });
+
+function range(start: number, end: number): number[] {
+  const array = [];
+  for (let n = start; n < end; n++) {
+    array.push(n);
+  }
+  return array;
+}

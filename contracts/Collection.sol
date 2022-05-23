@@ -97,22 +97,14 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
     /**
      * @dev sets base uri for all deeds
      */
-    function setTokenURI(string memory newURI)
-        external
-        whenNotPaused
-        onlyOwner
-    {
+    function setTokenURI(string memory newURI) external onlyOwner {
         baseTokenUri = newURI;
     }
 
     /**
      * @dev sets title search uri for title verification
      */
-    function setTitleSearchURI(string memory newURI)
-        external
-        whenNotPaused
-        onlyOwner
-    {
+    function setTitleSearchURI(string memory newURI) external onlyOwner {
         titleSearchUri = newURI;
     }
 
@@ -122,7 +114,6 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
      */
     function setMarketplaceContract(address newMarketplaceContract)
         external
-        whenNotPaused
         onlyOwner
     {
         marketplaceContract = newMarketplaceContract;
@@ -131,7 +122,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
     /**
      * @dev add recipient addresses to the authorized wallets list and grant them the ability to mint
      */
-    function authorizeWallet(address _wallet) external whenNotPaused onlyOwner {
+    function authorizeWallet(address _wallet) external onlyOwner {
         require(_wallet != address(0), "Wallet address cannot be zero address");
         _verifiedAddresses[_wallet] = true;
     }
@@ -139,11 +130,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
     /**
      * @dev remove recipient addresses to the authorized wallets list and revoke their ability to mint
      */
-    function deauthorizeWallet(address _wallet)
-        external
-        whenNotPaused
-        onlyOwner
-    {
+    function deauthorizeWallet(address _wallet) external onlyOwner {
         require(_wallet != address(0), "Wallet address cannot empty");
         _verifiedAddresses[_wallet] = false;
     }
@@ -188,6 +175,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
      */
     function verifyTitleOwnership(bytes32 _titleId)
         public
+        whenNotPaused
         returns (bytes32 requestId)
     {
         require(
@@ -222,7 +210,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         bytes32 _requestId,
         bytes32 _titleId,
         bool _verified
-    ) public recordChainlinkFulfillment(_requestId) {
+    ) public whenNotPaused recordChainlinkFulfillment(_requestId) {
         _verifiedTitles[_titleId] = _verified;
     }
 
@@ -304,7 +292,14 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         address to,
         uint256 deedId,
         bytes memory data
-    ) public virtual override onlyVerifiedAddress(to) onlyMarketplaceContract {
+    )
+        public
+        virtual
+        override
+        whenNotPaused
+        onlyVerifiedAddress(to)
+        onlyMarketplaceContract
+    {
         super.safeTransferFrom(from, to, deedId, data);
         _owners[deedId] = to;
     }
@@ -321,7 +316,13 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         address to,
         uint256[] memory deedIds,
         bytes memory data
-    ) public virtual onlyVerifiedAddress(to) onlyMarketplaceContract {
+    )
+        public
+        virtual
+        whenNotPaused
+        onlyVerifiedAddress(to)
+        onlyMarketplaceContract
+    {
         for (uint256 i = 0; i < deedIds.length; i++) {
             super.safeTransferFrom(from, to, deedIds[i], data);
             _owners[deedIds[i]] = to;

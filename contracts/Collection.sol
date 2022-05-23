@@ -61,17 +61,6 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
      */
     event DeedMinted(address indexed receiver, uint256 deedId);
 
-    /**
-     * @dev Event for batch deed mint logging
-     * @param receiver who got the deeds
-     * @param deedIds ids of the deeds purchased
-     */
-    event DeedsMinted(
-        address indexed receiver,
-        uint256 amount,
-        uint256[] deedIds
-    );
-
     //=============================== INITIALIZATION ===================================//
 
     /**
@@ -92,6 +81,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         jobId = "67bc04e4db32473bb5a893674f7e6342";
         fee = 0; // (Varies by network and job)
         _deedIds.increment(); // leave id=0 for checking if deed exists
+        _pause(); // start paused because there's more setup to do
     }
 
     //=============================== OWNER-ONLY FUNCTIONS ===================================//

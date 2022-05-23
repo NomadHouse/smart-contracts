@@ -5,7 +5,7 @@ import {
   BASIS,
   ListingState,
   makeMarketplaceContract,
-  makeNFTContract,
+  makeTestNFTContract,
   NULL_ADDRESS,
   pauseListing,
   postListing,
@@ -44,7 +44,7 @@ describe("Marketplace", function () {
   describe("unspoiled marketplace", () => {
     it("marketplace deploys correctly", async () => {
       const marketplace = await makeMarketplaceContract();
-      const nftContract = await makeNFTContract();
+      const nftContract = await makeTestNFTContract();
       const deployer = await maybeAddressableToString(Signer.deployer);
 
       const owner = await marketplace.owner();
@@ -77,14 +77,14 @@ describe("Marketplace", function () {
       const tokenId = BigNumber.from(42);
 
       beforeEach("mint fake NFT", async () => {
-        const nft = await makeNFTContract(Signer.seller);
+        const nft = await makeTestNFTContract(Signer.seller);
         await nft.faucet(tokenId, 1);
       });
 
       describe("approve marketplace", () => {
         beforeEach("approve marketplace to spend NFTs", async () => {
           const marketplace = await makeMarketplaceContract();
-          const nft = await makeNFTContract(Signer.seller);
+          const nft = await makeTestNFTContract(Signer.seller);
           await nft.setApprovalForAll(marketplace.address, true);
         });
 

@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { BigNumber, BigNumberish } from "ethers";
 import { expect } from "chai";
 
-import { Marketplace, TestNFT } from "../typechain-types";
+import { Collection, Marketplace, TestNFT } from "../typechain-types";
 import { SignerWithAddress } from "hardhat-deploy-ethers/signers";
 
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -93,11 +93,18 @@ export async function collectFees(opts: { owner: MaybeAddressable }) {
   const marketplace = await makeMarketplaceContract(opts.owner);
   await marketplace.collectFees(DEFAULT_COLLECT_GAS_LIMTI);
 }
-export async function makeNFTContract(
+export async function makeTestNFTContract(
   signer?: MaybeAddressable
 ): Promise<TestNFT> {
   const address = signer ? await maybeAddressableToString(signer) : undefined;
   return (await ethers.getContract("TestNFT", address)) as TestNFT;
+}
+
+export async function makeCollectionContract(
+  signer?: MaybeAddressable
+): Promise<Collection> {
+  const address = signer ? await maybeAddressableToString(signer) : undefined;
+  return (await ethers.getContract("NFT", address)) as Collection;
 }
 
 export async function assertListing(opts: {

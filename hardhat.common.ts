@@ -35,4 +35,13 @@ export const compilers = [
       },
     },
   },
+  {
+    version: "0.6.0",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
+    },
+  },
 ];

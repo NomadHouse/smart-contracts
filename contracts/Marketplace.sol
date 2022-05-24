@@ -60,10 +60,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         );
         // NOTE: This does *NOT* guarantee the NFT is owned by this account later.
         //       We only check here to prevent accidents, not malice.
-        require(
-            nft.balanceOf(msg.sender) == 1,
-            "only NFT owner may post"
-        );
+        require(nft.ownerOf(tokenId) == msg.sender, "only NFT owner may post");
 
         ListingState state = ListingState.Paused;
         if (ready) {
@@ -121,14 +118,9 @@ contract Marketplace is Ownable, ReentrancyGuard {
 
         listing.state = ListingState.Sold;
 
-        nft.safeTransferFrom(
-            listing.seller,
-            msg.sender,
-            listing.tokenId,
-            ""
-        );
+        nft.safeTransferFrom(listing.seller, msg.sender, listing.tokenId, "");
 
-        uint256 fee = msg.value * feePercent / 100;
+        uint256 fee = (msg.value * feePercent) / 100;
         collectableFees += fee;
 
         emit ListingChange(listingId, listing.state);
@@ -142,7 +134,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
 
         listing.state = ListingState.Closed;
 
-        uint256 owed = listing.price * (100 - feePercent) / 100;
+        uint256 owed = (listing.price * (100 - feePercent)) / 100;
 
         (bool sent, ) = listing.seller.call{value: owed, gas: gasLimit}("");
 

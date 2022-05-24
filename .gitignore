@@ -4,5 +4,7 @@ node_modules
 cache/
 dist/
 typechain-types/
+.mnemonic
+.env
 soljson-*
 .vscode

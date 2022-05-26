@@ -74,7 +74,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         setChainlinkOracle(oracle);
         setChainlinkToken(chainlinkToken);
         titleSearchUri = titleSearchUri_;
-        jobId = "67bc04e4db32473bb5a893674f7e6342";
+        jobId = "b107506bb152402dac00444a6da79d44";
         fee = fee_; // (Varies by network and job)
 
         deeds.push(); // 0th deed used to signal "no such deed"
@@ -191,12 +191,12 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
 
         request.add(
             "get",
-            string(abi.encodePacked(titleSearchUri, titleId, ".json"))
+            string(abi.encodePacked(titleSearchUri, bytes32ToString(titleId), ".json"))
         );
 
         requestId = sendChainlinkRequest(request, fee);
         
-        require(requestIdToTitleId[titleId] == bytes32(""), "request already sent");
+        require(requestIdToTitleId[requestId] == bytes32(""), "request already sent");
         
         requestIdToTitleId[requestId] = titleId;
     }
@@ -204,28 +204,29 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
     /**
      * @dev Receive the response and store it in a mapping to track verified titles
      * @param requestId identifier of original request; used for finding titleId
-     * @param response Encoded bits like:
-     * OOOOOOOOOOOOOOOOOOOOF___________
-     * Where:
-     * O -> owner address (20 bytes)
-     * F -> fractionalization (1 byte)
-     * _ -> empty (11 bytes)
+     * @param _owner address of the title owner
+     * @param _fractionalization amount of fractions allowed to mint (Max 52)
+     * @param _verified boolean which determines whether the title has been verified by external sources
      */
     function fulfillTitleOwnershipVerification(
         bytes32 requestId,
-        bytes32 response
+        address _owner,
+        uint8 _fractionalization,
+        bool _verified
     ) public whenNotPaused recordChainlinkFulfillment(requestId) {
         bytes32 titleId = requestIdToTitleId[requestId];
         delete requestIdToTitleId[requestId];
 
         require(titleOwners[titleId] == address(0), "title already verified");
+        require(_fractionalization <= 52, 
+        "Deeds cannot be fractionalized into more than 52 fractions");
 
-        (address owner, uint8 fractionalization) = decodeTitleVerificationResponse(response);
-
-        if (owner == address(0)) {
+        if (_verified == false) {
             emit TitleRejected(titleId);
             return;
         }
+
+        (address owner, uint8 fractionalization, bool verified) = (_owner, _fractionalization, _verified);
 
         titleOwners[titleId] = owner;
         deedsLeftToMint[titleId] = fractionalization;
@@ -237,20 +238,6 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         emit TitleVerified(titleId);
     }
 
-    function encodeTitleVerificationResponse(
-        address owner,
-        uint8 fractionalization
-    ) public pure returns (bytes32 response) {
-        response = bytes20(owner);
-        response = response | (bytes32(bytes1(fractionalization)) >> (20*8));
-    }
-
-    function decodeTitleVerificationResponse(
-        bytes32 response
-    ) public pure returns (address owner, uint8 fractionalization) {
-        owner = address(bytes20(response));
-        fractionalization = uint8(bytes1(response << (20*8)));
-    }
 
     function mintDeeds(bytes32 titleId, uint8 howMany)
         external
@@ -327,6 +314,18 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         onlyMarketplaceContract
     {
         super.safeTransferFrom(from, to, deedId, data);
+    }
+
+    function bytes32ToString(bytes32 _bytes32) public pure returns (string memory) {
+        uint8 i = 0;
+        while(i < 32 && _bytes32[i] != 0) {
+            i++;
+        }
+        bytes memory bytesArray = new bytes(i);
+        for (i = 0; i < 32 && _bytes32[i] != 0; i++) {
+            bytesArray[i] = _bytes32[i];
+        }
+        return string(bytesArray);
     }
 
     //============================== PRIVATE / INTERNAL FUNCTIONS  ==============================//

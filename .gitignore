@@ -8,3 +8,4 @@ typechain-types/
 .env
 soljson-*
 .vscode
+build/

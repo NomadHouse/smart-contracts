@@ -40,6 +40,12 @@ export const config: HardhatUserConfig = {
       saveDeployments: true,
       tags: ["local"],
     },
+    ganache: {
+      live: false,
+      saveDeployments: true,
+      tags: ["local", "ganache"],
+      url: "http://127.0.0.0:7545",
+    },
     hardhat: {
       live: false,
       saveDeployments: false,
@@ -49,10 +55,8 @@ export const config: HardhatUserConfig = {
     },
     kovan: {
       live: false,
-      url: "https://polygon-rpc.com",
-      // url: "https://rpc-mainnet.maticvigil.com/v1/9714a1ac19043ceba4e9515077fe8e17164298cb",
+      url: "https://kovan.infura.io",
       chainId: 42,
-      // gasPrice: gwei * 350,
     },
     polygon: {
       live: true,

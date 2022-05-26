@@ -139,14 +139,15 @@ describe("Collection", function () {
 
         beforeEach("fulfillTitleOwnershipVerification", async () => {
           const oracle = "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
-          const collection = await makeCollectionContract(oracle);
-          const response = await collection.encodeTitleVerificationResponse(
-            await maybeAddressableToString(Signer.seller),
-            52 // weeks in year
-          );
+          const collection = await makeCollectionContract(Signer.deployer);
+          const owner = "0xf1AF3f6C6386F57156BE2A7BbeddDe68F6Bd7e29";
+          const fractionalization = 52;
+          const verified = true;
           await collection.fulfillTitleOwnershipVerification(
             requestId,
-            response
+            owner,
+            fractionalization,
+            verified
           );
         });
 

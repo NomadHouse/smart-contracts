@@ -55,8 +55,9 @@ export const config: HardhatUserConfig = {
     },
     kovan: {
       live: false,
-      url: "https://kovan.infura.io",
+      url: "https://kovan.infura.io/v3/439f9f2589514c8fb75a894385c1cab0",
       chainId: 42,
+      gasPrice: gwei * 10,
     },
     polygon: {
       live: true,

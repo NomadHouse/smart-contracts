@@ -8,7 +8,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await getNamedAccounts();
 
   // TODO TestNFT -> NFT
-  const { address: nft } = await deployments.get("TestNFT");
+  // const { address: nft } = await deployments.get("TestNFT");
+  const { address: nft } = await deployments.get("NFT");
 
   await deployments.deploy("Marketplace", {
     contract: "Marketplace",

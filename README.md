@@ -16,7 +16,7 @@ Note that the NFT can **only** by traded through the Marketplace.
 
 - [Installation](#install)
 - [Usage](#usage)
-- [Smart Contracts](#smart-contracts)
+- [Smart Contracts](#smart-contracts-1)
 - [Maintainers](#maintainers)
 
 # Dev Environment setup

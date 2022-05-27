@@ -18,7 +18,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   await deployments.deploy("NFT", {
     contract: "Collection",
     from: deployer,
-    args: [oracle, linkToken, titleSearchUri],
+    args: [oracle, linkToken, titleSearchUri, fee],
     log: true,
   });
 };

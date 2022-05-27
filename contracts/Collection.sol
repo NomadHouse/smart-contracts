@@ -94,7 +94,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
     /**
      * @dev sets new chainlink Job Id 
      */
-    function setJobId(bytes32 newJobId) external onlyOwner {
+    function setJobId(string memory newJobId) external onlyOwner {
         jobId = newJobId;
     }
 

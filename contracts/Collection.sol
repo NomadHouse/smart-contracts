@@ -68,14 +68,13 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
     constructor(
         address oracle,
         address chainlinkToken,
-        string memory titleSearchUri_,
-        uint256 fee_
+        string memory titleSearchUri_
     ) ERC721("NomadHouse", "NMH") ConfirmedOwner(msg.sender) {
         setChainlinkOracle(oracle);
         setChainlinkToken(chainlinkToken);
         titleSearchUri = titleSearchUri_;
         jobId = "b107506bb152402dac00444a6da79d44";
-        fee = fee_; // (Varies by network and job)
+        fee = 0.1 * 10**18; // (Varies by network and job)
 
         deeds.push(); // 0th deed used to signal "no such deed"
 

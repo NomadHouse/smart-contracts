@@ -50,7 +50,11 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
      * @param titleId id of the title of which the deed is a fraction
      * @param deedId id of the deed purchased
      */
-    event DeedMinted(address indexed titleOwner, bytes32 titleId, uint256 deedId);
+    event DeedMinted(
+        address indexed titleOwner,
+        bytes32 titleId,
+        uint256 deedId
+    );
     event TitleVerified(bytes32 titleId);
     event TitleRejected(bytes32 titleId);
 
@@ -94,7 +98,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
     }
 
     /**
-     * @dev sets new chainlink Job Id 
+     * @dev sets new chainlink Job Id
      */
     function setJobId(string memory newJobId) external onlyOwner {
         jobId = stringToBytes32(newJobId);
@@ -171,7 +175,10 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
     }
 
     modifier onlyTitleOwner(bytes32 titleId) {
-        require(msg.sender == titleOwners[titleId], "msg.sender is not title owner");
+        require(
+            msg.sender == titleOwners[titleId],
+            "msg.sender is not title owner"
+        );
         _;
     }
 
@@ -190,7 +197,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         returns (bytes32 requestId)
     {
         require(titleOwners[titleId] == address(0), "title already verified");
-        
+
         Chainlink.Request memory request = buildChainlinkRequest(
             jobId,
             address(this),
@@ -199,13 +206,22 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
 
         request.add(
             "get",
-            string(abi.encodePacked(titleSearchUri, bytes32ToString(titleId), ".json"))
+            string(
+                abi.encodePacked(
+                    titleSearchUri,
+                    bytes32ToString(titleId),
+                    ".json"
+                )
+            )
         );
 
         requestId = sendOperatorRequestTo(operatorAddress, request, fee);
-        
-        require(requestIdToTitleId[requestId] == bytes32(""), "request already sent");
-        
+
+        require(
+            requestIdToTitleId[requestId] == bytes32(""),
+            "request already sent"
+        );
+
         requestIdToTitleId[requestId] = titleId;
     }
 
@@ -226,8 +242,10 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         delete requestIdToTitleId[requestId];
 
         require(titleOwners[titleId] == address(0), "title already verified");
-        require(_fractionalization <= 52, 
-        "Deeds cannot be fractionalized into more than 52 fractions");
+        require(
+            _fractionalization <= 52,
+            "Deeds cannot be fractionalized into more than 52 fractions"
+        );
 
         if (_verified == false) {
             emit TitleRejected(titleId);
@@ -250,7 +268,6 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         emit TitleVerified(titleId);
     }
 
-
     function mintDeeds(bytes32 titleId, uint8 howMany)
         external
         whenNotPaused
@@ -270,14 +287,18 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
 
     //================== NON-MODIFYING FUNCTIONS ==================//
 
-    function getTitle(bytes32 titleId) public view returns (
-      address owner, 
-      uint8 deedsLeftToMint_, 
-      uint256[] memory deeds
-    ) {
+    function getTitle(bytes32 titleId)
+        public
+        view
+        returns (
+            address owner,
+            uint8 deedsLeftToMint_,
+            uint256[] memory deeds
+        )
+    {
         owner = titleOwners[titleId];
         deedsLeftToMint_ = deedsLeftToMint[titleId];
-        
+
         deeds = new uint256[](titledDeeds[titleId].length);
         for (uint256 i; i < titledDeeds[titleId].length; i++) {
             deeds[i] = titledDeeds[titleId][i];
@@ -328,9 +349,13 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         super.safeTransferFrom(from, to, deedId, data);
     }
 
-    function bytes32ToString(bytes32 _bytes32) public pure returns (string memory) {
+    function bytes32ToString(bytes32 _bytes32)
+        public
+        pure
+        returns (string memory)
+    {
         uint8 i = 0;
-        while(i < 32 && _bytes32[i] != 0) {
+        while (i < 32 && _bytes32[i] != 0) {
             i++;
         }
         bytes memory bytesArray = new bytes(i);
@@ -340,7 +365,11 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         return string(bytesArray);
     }
 
-    function stringToBytes32(string memory source) public pure returns (bytes32 result) {
+    function stringToBytes32(string memory source)
+        public
+        pure
+        returns (bytes32 result)
+    {
         bytes memory tempEmptyStringTest = bytes(source);
         if (tempEmptyStringTest.length == 0) {
             return 0x0;
@@ -362,12 +391,10 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         return baseTokenUri;
     }
 
-    function min(uint8 left, uint8 right) pure private returns (uint8) {
+    function min(uint8 left, uint8 right) private pure returns (uint8) {
         if (left < right) {
             return left;
         }
         return right;
     }
-
-
 }

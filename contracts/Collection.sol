@@ -216,7 +216,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
      */
     function fulfillTitleOwnershipVerification(
         bytes32 requestId,
-        bytes32 _owner,
+        bytes20 _owner,
         uint8 _fractionalization,
         bool _verified
     ) public whenNotPaused recordChainlinkFulfillment(requestId) {

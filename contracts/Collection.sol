@@ -29,6 +29,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
     mapping(address => bool) _verifiedAddresses;
 
     // Params for Chainlink Request
+    address private oracleAddress;
     bytes32 private jobId;
     uint256 private fee;
 
@@ -60,8 +61,8 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
      *
      * Kovan Testnet details:
      * Link Token: 0xa36085F69e2889c224210F603D836748e7dC0088
-     * Oracle: 0x094C858cF9428a4c18023AA714d3e205b6Db6354 (Oracle Kovan Address)
-     * jobId: 69dd0498-1467-495e-a834-92af1c7568fb
+     * Operator: 0xF1197352B990E27aF055313AAc157A8472851ed8 (Oracle Kovan Address)
+     * jobId: a2283db8081f4925a2d290494cae7a15
      *
      */
 
@@ -70,10 +71,11 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         address chainlinkToken,
         string memory titleSearchUri_
     ) ERC721("NomadHouse", "NMH") ConfirmedOwner(msg.sender) {
-        setChainlinkOracle(oracle);
+        oracleAddress = oracle;
+        setChainlinkOracle(oracleAddress);
         setChainlinkToken(chainlinkToken);
         titleSearchUri = titleSearchUri_;
-        jobId = "69dd04981467495ea83492af1c7568fb";
+        jobId = "a2283db8081f4925a2d290494cae7a15";
         fee = 0.1 * 10**18; // (Varies by network and job)
 
         deeds.push(); // 0th deed used to signal "no such deed"
@@ -200,7 +202,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
             string(abi.encodePacked(titleSearchUri, bytes32ToString(titleId), ".json"))
         );
 
-        requestId = sendChainlinkRequest(request, fee);
+        requestId = sendOperatorRequestTo(oracleAddress, request, fee);
         
         require(requestIdToTitleId[requestId] == bytes32(""), "request already sent");
         

@@ -40,12 +40,24 @@ export const config: HardhatUserConfig = {
       saveDeployments: true,
       tags: ["local"],
     },
+    ganache: {
+      live: false,
+      saveDeployments: true,
+      tags: ["local", "ganache"],
+      url: "http://127.0.0.0:7545",
+    },
     hardhat: {
       live: false,
       saveDeployments: false,
       tags: ["test", "local"],
       blockGasLimit: 20_000_000, // polygon limit
       gas: 20_000_000, // hardcoded because ganache ignores the per-tx gasLimit override
+    },
+    kovan: {
+      live: false,
+      url: "https://kovan.infura.io/v3/439f9f2589514c8fb75a894385c1cab0",
+      chainId: 42,
+      gasPrice: gwei * 10,
     },
     polygon: {
       live: true,

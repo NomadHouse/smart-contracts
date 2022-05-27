@@ -34,7 +34,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 };
 
 func.runAtTheEnd = true;
-func.tags = ["Print"];
+func.tags = ["Print", "production"];
 
 export default func;
 

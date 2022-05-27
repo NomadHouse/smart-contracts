@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.3;
 
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Marketplace is Ownable, ReentrancyGuard {
-    IERC1155 public nft;
+    IERC721 public nft;
     uint256 public feePercent;
     uint256 public collectableFees;
 
@@ -40,7 +40,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
     );
     event ListingChange(uint256 listingId, ListingState state);
 
-    constructor(IERC1155 nft_, uint256 feePercent_) {
+    constructor(IERC721 nft_, uint256 feePercent_) {
         nft = nft_;
         feePercent = feePercent_;
         // The 0th index is reserved to indicate the absence of a Listing identifier.
@@ -60,10 +60,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         );
         // NOTE: This does *NOT* guarantee the NFT is owned by this account later.
         //       We only check here to prevent accidents, not malice.
-        require(
-            nft.balanceOf(msg.sender, tokenId) == 1,
-            "only NFT owner may post"
-        );
+        require(nft.ownerOf(tokenId) == msg.sender, "only NFT owner may post");
 
         ListingState state = ListingState.Paused;
         if (ready) {
@@ -121,15 +118,9 @@ contract Marketplace is Ownable, ReentrancyGuard {
 
         listing.state = ListingState.Sold;
 
-        nft.safeTransferFrom(
-            listing.seller,
-            msg.sender,
-            listing.tokenId,
-            1,
-            ""
-        );
+        nft.safeTransferFrom(listing.seller, msg.sender, listing.tokenId, "");
 
-        uint256 fee = msg.value * feePercent / 100;
+        uint256 fee = (msg.value * feePercent) / 100;
         collectableFees += fee;
 
         emit ListingChange(listingId, listing.state);
@@ -143,7 +134,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
 
         listing.state = ListingState.Closed;
 
-        uint256 owed = listing.price * (100 - feePercent) / 100;
+        uint256 owed = (listing.price * (100 - feePercent)) / 100;
 
         (bool sent, ) = listing.seller.call{value: owed, gas: gasLimit}("");
 

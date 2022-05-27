@@ -1,4 +1,11 @@
 node_modules
+.mnemonic
+.env
 cache/
 dist/
 typechain-types/
+.mnemonic
+.env
+soljson-*
+.vscode
+build/

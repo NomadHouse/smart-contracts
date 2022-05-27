@@ -74,7 +74,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         setChainlinkToken(chainlinkToken);
         titleSearchUri = titleSearchUri_;
         jobId = "b107506bb152402dac00444a6da79d44";
-        fee = 0.1 * 10 ** 18; // (Varies by network and job)
+        fee = fee_; // (Varies by network and job)
 
         deeds.push(); // 0th deed used to signal "no such deed"
 

@@ -61,7 +61,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
      * Kovan Testnet details:
      * Link Token: 0xa36085F69e2889c224210F603D836748e7dC0088
      * Oracle: 0x094C858cF9428a4c18023AA714d3e205b6Db6354 (Oracle Kovan Address)
-     * jobId: 67bc04e4db32473bb5a893674f7e6342
+     * jobId: b107506bb152402dac00444a6da79d44
      *
      */
 
@@ -75,7 +75,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         setChainlinkToken(chainlinkToken);
         titleSearchUri = titleSearchUri_;
         jobId = "b107506bb152402dac00444a6da79d44";
-        fee = fee_; // (Varies by network and job)
+        fee = fee_ * 10 ** 18; // (Varies by network and job)
 
         deeds.push(); // 0th deed used to signal "no such deed"
 
@@ -90,6 +90,13 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
 
     function unpause() external onlyOwner {
         _unpause();
+    }
+
+    /**
+     * @dev sets new chainlink Job Id 
+     */
+    function setJobId(bytes32 newJobId) external onlyOwner {
+        jobId = newJobId;
     }
 
     /**

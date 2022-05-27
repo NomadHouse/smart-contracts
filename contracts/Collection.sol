@@ -29,7 +29,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
     mapping(address => bool) _verifiedAddresses;
 
     // Params for Chainlink Request
-    address private oracleAddress;
+    address private operatorAddress;
     bytes32 private jobId;
     uint256 private fee;
 
@@ -67,12 +67,12 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
      */
 
     constructor(
-        address oracle,
+        address operator,
         address chainlinkToken,
         string memory titleSearchUri_
     ) ERC721("NomadHouse", "NMH") ConfirmedOwner(msg.sender) {
-        oracleAddress = oracle;
-        setChainlinkOracle(oracleAddress);
+        operatorAddress = operator;
+        setChainlinkOracle(operatorAddress);
         setChainlinkToken(chainlinkToken);
         titleSearchUri = titleSearchUri_;
         jobId = "a2283db8081f4925a2d290494cae7a15";
@@ -202,7 +202,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
             string(abi.encodePacked(titleSearchUri, bytes32ToString(titleId), ".json"))
         );
 
-        requestId = sendOperatorRequestTo(oracleAddress, request, fee);
+        requestId = sendOperatorRequestTo(operatorAddress, request, fee);
         
         require(requestIdToTitleId[requestId] == bytes32(""), "request already sent");
         

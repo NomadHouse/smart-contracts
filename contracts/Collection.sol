@@ -232,7 +232,11 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
             return;
         }
 
-        (address owner, uint8 fractionalization, bool verified) = (address(uint160(bytes20(_owner))), _fractionalization, _verified);
+        (address owner, uint8 fractionalization, bool verified) = (
+            address(uint160(bytes20(_owner))),
+            _fractionalization,
+            _verified
+        );
 
         titleOwners[titleId] = owner;
         deedsLeftToMint[titleId] = fractionalization;

@@ -15,8 +15,8 @@ Note that the NFT can **only** by traded through the Marketplace.
 ## Table of Contents
 
 - [Installation](#install)
+- [Setup](#setup)
 - [Usage](#usage)
-- [Smart Contracts](#smart-contracts-1)
 - [Maintainers](#maintainers)
 
 # Dev Environment setup
@@ -33,7 +33,7 @@ npm run build
 npm run test
 ```
   
-# Usage
+# Setup
 
 ## Deploy
 Deployment has 3 phases:
@@ -63,7 +63,7 @@ PRIVATE_KEY=$deployerPrivateKey npm run deploy --tags production --network kovan
 ### UnPause the NFT
 Call `Collection.UnPause`.
 
-# Smart Contracts
+# Usage
 
 ## Collection (NFT)
 The NFT contract deals with titles and deeds.
@@ -107,7 +107,9 @@ The marketplace is simple:
 1. Post a NFT for sale
 2. Buy that NFT
 
-The KYC requirement is enforced in the NFT, not the Marketplace.
+The KYC requirement is enforced in the NFT.
+Only the marketplace can transfer the NFTs;
+additional checks to ensure legality will be enforced in the marketplace.
 
 The fee is set at deployment.
 A future development will make the fee changeable for new listings.

@@ -61,7 +61,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
      * Kovan Testnet details:
      * Link Token: 0xa36085F69e2889c224210F603D836748e7dC0088
      * Oracle: 0x094C858cF9428a4c18023AA714d3e205b6Db6354 (Oracle Kovan Address)
-     * jobId: b107506bb152402dac00444a6da79d44
+     * jobId: 69dd0498-1467-495e-a834-92af1c7568fb
      *
      */
 
@@ -73,7 +73,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         setChainlinkOracle(oracle);
         setChainlinkToken(chainlinkToken);
         titleSearchUri = titleSearchUri_;
-        jobId = "b107506bb152402dac00444a6da79d44";
+        jobId = "69dd04981467495ea83492af1c7568fb";
         fee = 0.1 * 10**18; // (Varies by network and job)
 
         deeds.push(); // 0th deed used to signal "no such deed"
@@ -95,7 +95,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
      * @dev sets new chainlink Job Id 
      */
     function setJobId(string memory newJobId) external onlyOwner {
-        jobId = newJobId;
+        jobId = stringToBytes32(newJobId);
     }
 
     /**
@@ -332,6 +332,17 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
             bytesArray[i] = _bytes32[i];
         }
         return string(bytesArray);
+    }
+
+    function stringToBytes32(string memory source) public pure returns (bytes32 result) {
+        bytes memory tempEmptyStringTest = bytes(source);
+        if (tempEmptyStringTest.length == 0) {
+            return 0x0;
+        }
+
+        assembly {
+            result := mload(add(source, 32))
+        }
     }
 
     //============================== PRIVATE / INTERNAL FUNCTIONS  ==============================//

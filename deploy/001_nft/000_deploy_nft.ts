@@ -9,10 +9,10 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const titleSearchUri =
     "https://gateway.pinata.cloud/ipfs/QmQ2aMEegRGynCMJZfu3HWKjMwBQKiB1vVBgAwH7Ga1yfK/";
 
-  // const oracle = "0x90F79bf6EB2c4f870365E785982E1f101E93b906"; // FAKE
-  const operator = "0xF1197352B990E27aF055313AAc157A8472851ed8"; // KOVAN Address
-  // const { address: linkToken } = await deployments.get("TestLinkToken");
-  const linkToken = "0xa36085F69e2889c224210F603D836748e7dC0088"; // KOVAN Address
+  const operator = "0x90F79bf6EB2c4f870365E785982E1f101E93b906"; // FAKE (hardhat signer index=3)
+  // const operator = "0xF1197352B990E27aF055313AAc157A8472851ed8"; // KOVAN Address
+  const { address: linkToken } = await deployments.get("TestLinkToken");
+  // const linkToken = "0xa36085F69e2889c224210F603D836748e7dC0088"; // KOVAN Address
 
   await deployments.deploy("NFT", {
     contract: "Collection",
@@ -22,7 +22,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   });
 };
 
-func.tags = ["NomadHouse", "NFT"];
+func.tags = ["NFT", "production"];
 func.dependencies = [];
 
 export default func;

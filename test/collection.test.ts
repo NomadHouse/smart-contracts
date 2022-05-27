@@ -1,4 +1,4 @@
-import { deployments } from "hardhat";
+import { deployments, ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 
 import {
@@ -68,24 +68,6 @@ describe("Collection", function () {
     });
   });
 
-  describe("chainlink encode/decode", () => {
-    it("encode-decode", async () => {
-      const collection = await makeCollectionContract();
-
-      const owner = await maybeAddressableToString(Signer.seller);
-
-      const fractionalization = 52;
-      const encoded = await collection.encodeTitleVerificationResponse(
-        owner,
-        fractionalization
-      );
-      const decoded = await collection.decodeTitleVerificationResponse(encoded);
-
-      expect(decoded[0]).to.equal(owner);
-      expect(decoded[1]).to.equal(fractionalization);
-    });
-  });
-
   describe("set up collection", () => {
     const tokenURI = "https://fake.faux/";
     const titleSearchURI = "https://false.faux/";
@@ -138,9 +120,9 @@ describe("Collection", function () {
         });
 
         beforeEach("fulfillTitleOwnershipVerification", async () => {
-          const oracle = "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
-          const collection = await makeCollectionContract(Signer.deployer);
-          const owner = "0xf1AF3f6C6386F57156BE2A7BbeddDe68F6Bd7e29";
+          const oracle = await maybeAddressableToString(Signer.oracle);
+          const collection = await makeCollectionContract(oracle);
+          const owner = await maybeAddressableToString(Signer.seller);
           const fractionalization = 52;
           const verified = true;
           await collection.fulfillTitleOwnershipVerification(
@@ -174,7 +156,7 @@ describe("Collection", function () {
             const title = await collection.getTitle(titleId);
             expect(title.owner, "owner").to.equal(owner);
             expect(title.deedsLeftToMint_).to.equal(51);
-            expect(title.deeds.map(BigNumber.from)).to.deep.equal(
+            expect(title.deeds_.map(BigNumber.from)).to.deep.equal(
               [tokenId].map(BigNumber.from)
             );
           });
@@ -198,7 +180,7 @@ describe("Collection", function () {
               const title = await collection.getTitle(titleId);
               expect(title.owner, "owner").to.equal(owner);
               expect(title.deedsLeftToMint_).to.equal(0);
-              expect(title.deeds.map(BigNumber.from)).to.deep.equal(
+              expect(title.deeds_.map(BigNumber.from)).to.deep.equal(
                 range(1, 53).map(BigNumber.from) // [1,53) aka [1,52]
               );
             });

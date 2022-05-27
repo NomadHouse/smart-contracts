@@ -229,13 +229,13 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
      * @dev Receive the response and store it in a mapping to track verified titles
      * @param requestId identifier of original request; used for finding titleId
      * @param _owner address of the title owner
-     * @param _fractionalization amount of fractions allowed to mint (Max 52)
+     * @param fractionalization amount of fractions allowed to mint (Max 52)
      * @param _verified boolean which determines whether the title has been verified by external sources
      */
     function fulfillTitleOwnershipVerification(
         bytes32 requestId,
         bytes20 _owner,
-        uint8 _fractionalization,
+        uint8 fractionalization,
         bool _verified
     ) public whenNotPaused recordChainlinkFulfillment(requestId) {
         bytes32 titleId = requestIdToTitleId[requestId];
@@ -243,7 +243,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
 
         require(titleOwners[titleId] == address(0), "title already verified");
         require(
-            _fractionalization <= 52,
+            fractionalization <= 52,
             "Deeds cannot be fractionalized into more than 52 fractions"
         );
 
@@ -252,11 +252,7 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
             return;
         }
 
-        (address owner, uint8 fractionalization, bool verified) = (
-            address(uint160(bytes20(_owner))),
-            _fractionalization,
-            _verified
-        );
+        address owner = address(uint160(bytes20(_owner)));
 
         titleOwners[titleId] = owner;
         deedsLeftToMint[titleId] = fractionalization;
@@ -293,15 +289,15 @@ contract Collection is ERC721, Pausable, ChainlinkClient, ConfirmedOwner {
         returns (
             address owner,
             uint8 deedsLeftToMint_,
-            uint256[] memory deeds
+            uint256[] memory deeds_
         )
     {
         owner = titleOwners[titleId];
         deedsLeftToMint_ = deedsLeftToMint[titleId];
 
-        deeds = new uint256[](titledDeeds[titleId].length);
+        deeds_ = new uint256[](titledDeeds[titleId].length);
         for (uint256 i; i < titledDeeds[titleId].length; i++) {
-            deeds[i] = titledDeeds[titleId][i];
+            deeds_[i] = titledDeeds[titleId][i];
         }
     }
 

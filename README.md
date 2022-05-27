@@ -10,6 +10,8 @@ There are two smart contracts of note:
 1. Collection. This is the NFT.
 2. Marketplace. This is a simple custom contract for NFT trading.
 
+Note that the NFT can **only** by traded through the Marketplace.
+
 ## Table of Contents
 
 - [Installation](#install)
@@ -34,9 +36,32 @@ npm run test
 # Usage
 
 ## Deploy
+Deployment has 3 phases:
+1. Deploy the contracts
+2. Configure the NFT, if needed.
+3. UnPause the NFT.
+
+### Deploy the Contracts
+
+The private key is of an EOA with sufficient ETH to pay the deployment gas cost.
+It will also be the default owner of the NFT and Marketplace, giving it certain rights.
+
+The network must match a network in the `hardhat.config.ts` file.
+
+If you want to deploy for testing, use `--tags test,production`.
+
 ```
-PRIVATE_KEY=$deployerPrivateKey npm run deploy --network kovan
+PRIVATE_KEY=$deployerPrivateKey npm run deploy --tags production --network kovan
 ```
+
+### Configure the NFT
+- `setMarketplaceContract` is always needed because there is no deployment default.
+- `setTokenURI` is always needed because there is no deployment default.
+- `setJobId` is usually needed because the `jobId` is hardcoded at deploy.
+- `setTitleSearchURI` is needed whenever the IPFS link changes.
+
+### UnPause the NFT
+Call `Collection.UnPause`.
 
 # Smart Contracts
 
